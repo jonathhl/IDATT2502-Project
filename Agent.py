@@ -1,7 +1,25 @@
+import gym
+
 import Constants as c
 import torch
 from Replay import ReplayMemory
 from DQNModel import DQN
+
+env = gym.make('ALE/Assault-v5', render_mode='human')
+
+# Code only to make sure environment works and starts
+# TODO: Remove below code
+env.reset()
+
+episode_reward = 0
+while True:
+    action = env.action_space.sample()
+    _, reward, done, _, _ = env.step(action)
+    episode_reward += reward
+    if done:
+        print('Reward: %s' % episode_reward)
+        break
+# TODO: Remove above code
 
 class DQNAgent:
     def __init__(
