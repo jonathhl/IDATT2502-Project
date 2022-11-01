@@ -1,25 +1,21 @@
-import random
+"""
+    Buffer to store replays and past experience from runs.
 
-
+    Input
+        Capacity: also commonly named buffer_size, takes the memory_size for the code.
+"""
 class ReplayMemory(object):
     def __init__(self, capacity):
         self.capacity = capacity
-        self.memory = []
-        self.position = 0
+        self.memory = [] * capacity
+        self.i = 0
 
-    def push(self, *args):
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = 'state', 'action', 'next_state', 'reward'
-        self.position = (self.position + 1) % self.capacity
+    def push(self, info):
+        self.capacity[self.i % self.capacity] = info
+        self.i += 1
 
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
-
-
-class PrioritizedReplay(object):
-    def __init__(self, capacity):
-        pass
+    def sample(self, num_samples):
+        assert num_samples < min(self.i, self.capacity)
+        if self.i < self.capacity:
+            return sample(self.memory[:self.i], num_samples)
+        return sample(self.memory, num_samples)
