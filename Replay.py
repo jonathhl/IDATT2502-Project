@@ -1,3 +1,5 @@
+from Constants import memory_size
+
 """
     Buffer to store replays and past experience from runs.
 
@@ -5,9 +7,9 @@
         Capacity: also commonly named buffer_size, takes the memory_size for the code.
 """
 class ReplayMemory(object):
-    def __init__(self, capacity):
+    def __init__(self, capacity=memory_size):
         self.capacity = capacity
-        self.memory = [] * capacity
+        self.memory = [None] * capacity
         self.i = 0
 
     def push(self, info):
