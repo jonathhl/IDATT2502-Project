@@ -1,18 +1,20 @@
-import gym
-import time, json
-import numpy as np
-import torch
+import json
+import time
 from collections import deque
 
+import gym
+import numpy as np
+import torch
+
 from Agent import Agent
-from Constants import ENVIRONMENT, LOAD_MODEL_FROM_FILE, MODEL_PATH, LOAD_FILE_EPISODE, MAX_EPISODE, MAX_STEP,\
+from Constants import ENVIRONMENT, LOAD_MODEL_FROM_FILE, MODEL_PATH, LOAD_FILE_EPISODE, MAX_EPISODE, MAX_STEP, \
     RENDER_GAME_WINDOW, TRAIN_MODEL, SAVE_MODELS, SAVE_MODEL_INTERVAL
 
 environment = gym.make(ENVIRONMENT)  # Get env
 agent = Agent(environment)  # Create Agent
 
 if LOAD_MODEL_FROM_FILE:
-    agent.target_model.load_state_dict(torch.load(MODEL_PATH + str(LOAD_FILE_EPISODE) + ".pkl"))
+    agent.target.load_state_dict(torch.load(MODEL_PATH + str(LOAD_FILE_EPISODE) + ".pkl"))
 
     with open(MODEL_PATH + str(LOAD_FILE_EPISODE) + '.json') as outfile:
         param = json.load(outfile)
@@ -76,12 +78,12 @@ for episode in range(startEpisode, MAX_EPISODE):
                 weightsPath = MODEL_PATH + str(episode) + '.pkl'
                 epsilonPath = MODEL_PATH + str(episode) + '.json'
 
-                torch.save(agent.target_model.state_dict(), weightsPath)
+                torch.save(agent.target.state_dict(), weightsPath)
                 with open(epsilonPath, 'w') as outfile:
                     json.dump(epsilonDict, outfile)
 
             if TRAIN_MODEL:
-                agent.target_model.load_state_dict(agent.target_model.state_dict())  # Update target model
+                agent.target.load_state_dict(agent.target.state_dict())  # Update target model
 
             last_100_ep_reward.append(total_reward)
             avg_max_q_val = total_max_q_val / step

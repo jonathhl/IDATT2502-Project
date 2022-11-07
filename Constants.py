@@ -20,7 +20,9 @@ MAX_MEMORY_LEN = 50_000  # Max memory len
 MIN_MEMORY_LEN = 40_000  # Min memory len before start train
 
 GAMMA = .97  # Discount rate
-ALPHA = .00025  # Learning rate
+LEARNING_RATE = .00025  # Learning rate
 EPSILON_DECAY = .99  # Epsilon decay rate by step
+EPSILON = 1
+EPSILON_MIN = .05
 
-RENDER_GAME_WINDOW = False  # Opens a new window to render the game (Won't work on colab default)
+RENDER_GAME_WINDOW = False
