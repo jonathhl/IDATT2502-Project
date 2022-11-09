@@ -30,7 +30,7 @@ class Agent:
         self.target.eval()
         self.optimizer = torch.optim.Adam(self.target.parameters(), lr=self.lr)
 
-    def preProcess(self, frame):
+    def pre_process(self, frame):
         if frame.size == 210 * 160 * 3:
             image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             image = image[self.crop_dim[0]:self.crop_dim[1], self.crop_dim[2]:self.crop_dim[3]]  # Crops 20px from top
@@ -84,9 +84,9 @@ class Agent:
 
         return loss, torch.max(state_q_values).item()
 
-    def storeResults(self, state, action, reward, nextState, done):
+    def store_results(self, state, action, reward, nextState, done):
         self.memory.append([state[None, :], action, reward, nextState[None, :], done])
 
-    def adaptiveEpsilon(self):
+    def adaptive_epsilon(self):
         if self.epsilon > self.epsilon_minimum:
             self.epsilon *= self.decay

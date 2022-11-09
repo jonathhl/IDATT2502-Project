@@ -6,7 +6,7 @@ import numpy as np
 
 from Agent import Agent
 from FileHandler import load_model, save_model, save_outstr
-from Constants import ENVIRONMENT, MODEL_PATH, MAX_EPISODE, MAX_STEP, \
+from Constants import ENVIRONMENT, MAX_EPISODE, MAX_STEP, \
     RENDER_GAME_WINDOW, TRAIN_MODEL, SAVE_MODELS, SAVE_MODEL_INTERVAL, DEVICE
 
 environment = gym.make(ENVIRONMENT)  # Get env
@@ -23,7 +23,7 @@ for episode in range(start_episode, MAX_EPISODE):
     start_time = time.time()  # Keep time
     state = environment.reset()  # Reset env
 
-    state = agent.preProcess(state)  # Process image
+    state = agent.pre_process(state)  # Process image
 
     state = np.stack((state, state, state, state))
 
@@ -38,11 +38,11 @@ for episode in range(start_episode, MAX_EPISODE):
         action = agent.act(state)  # Act
         next_state, reward, done, info = environment.step(action)  # Observe
 
-        next_state = agent.preProcess(next_state)  # Process image
+        next_state = agent.pre_process(next_state)  # Process image
 
         next_state = np.stack((next_state, state[0], state[1], state[2]))
 
-        agent.storeResults(state, action, reward, next_state, done)  # Store to mem
+        agent.store_results(state, action, reward, next_state, done)  # Store to mem
 
         state = next_state  # Update state
 
@@ -57,7 +57,7 @@ for episode in range(start_episode, MAX_EPISODE):
         total_reward += reward
         total_step += 1
         if total_step % 1000 == 0:
-            agent.adaptiveEpsilon()  # Decrease epsilon
+            agent.adaptive_epsilon()  # Decrease epsilon
 
         if done:  # Episode completed
             current_time = time.time()  # Keep current time
