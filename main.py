@@ -3,6 +3,7 @@ from collections import deque
 
 import gym
 import numpy as np
+import wandb
 
 from Agent import Agent
 from FileHandler import load_model, save_model, save_outstr
@@ -11,6 +12,14 @@ from Constants import ENVIRONMENT, MAX_EPISODE, MAX_STEP, \
 
 environment = gym.make(ENVIRONMENT)  # Get env
 agent = Agent(environment)  # Create Agent
+
+wandb.init(project="Assault-DQN")
+
+wandb.config = {
+    "learning_rate": 0.00025,
+    "epochs": 10000,
+    "batch_size": 64
+}
 
 print(DEVICE)
 
@@ -74,10 +83,15 @@ for episode in range(start_episode, MAX_EPISODE):
             last_100_ep_reward.append(total_reward)
             avg_max_q_val = total_max_q_val / step
 
-            out_str = "Episode:{} Time:{} Reward:{:.2f} Loss:{:.2f} Last_100_Avg_Rew:{:.3f} Avg_Max_Q:{:.3f} Epsilon:{:.2f} Duration:{:.2f} Step:{} CStep:{}".format(
+            out_str = "Episode:{} Time:{} Reward:{:.2f} Loss:{:.2f} Last_100_Avg_Rew:{:.3f} Avg_Max_Q:{:.3f} " \
+                      "Epsilon:{:.2f} Duration:{:.2f} Step:{} CStep:{}".format(
                 episode, current_time_format, total_reward, total_loss, np.mean(last_100_ep_reward), avg_max_q_val,
                 agent.epsilon, time_passed, step, total_step
             )
+
+            if loss != 0:
+                wandb.log({"Loss": loss, "Average reward": np.mean(last_100_ep_reward), "Reward": total_reward,
+                           "Epsilon": agent.epsilon})
 
             print(out_str)
 
