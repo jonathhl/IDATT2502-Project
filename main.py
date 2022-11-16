@@ -13,7 +13,7 @@ from Constants import ENVIRONMENT, MAX_EPISODE, MAX_STEP, \
 environment = gym.make(ENVIRONMENT)  # Get env
 agent = Agent(environment)  # Create Agent
 
-wandb.init(project="Assault-DQN")
+wandb.init(project="Assault-DQN", entity="idatt2502-assault")
 
 wandb.config = {
     "learning_rate": 0.00025,
@@ -25,7 +25,7 @@ print(DEVICE)
 
 start_episode = load_model(agent)
 
-last_100_ep_reward = deque(maxlen=100)  # Last 100 episode rewards
+last_100_ep_reward = deque(maxlen=100)  # Last 100 episode rewards # TODO: What is the deque function??
 total_step = 1  # Cumulative sum of all steps in episodes
 for episode in range(start_episode, MAX_EPISODE):
 
@@ -34,7 +34,7 @@ for episode in range(start_episode, MAX_EPISODE):
 
     state = agent.pre_process(state)  # Process image
 
-    state = np.stack((state, state, state, state))
+    state = np.stack((state, state, state, state))  # TODO: Why does this functions take 4 exactly identical objects??
 
     total_max_q_val = 0  # Total max q vals
     total_reward = 0  # Total reward for each episode
@@ -45,10 +45,13 @@ for episode in range(start_episode, MAX_EPISODE):
             environment.render()  # Show state visually
 
         action = agent.act(state)  # Act
+
+        # TODO: What is next_state??
         next_state, reward, done, info = environment.step(action)  # Observe
 
         next_state = agent.pre_process(next_state)  # Process image
 
+        # TODO: What is happening below??
         next_state = np.stack((next_state, state[0], state[1], state[2]))
 
         agent.store_results(state, action, reward, next_state, done)  # Store to mem
@@ -65,6 +68,8 @@ for episode in range(start_episode, MAX_EPISODE):
         total_max_q_val += max_q_val
         total_reward += reward
         total_step += 1
+
+        # TODO: Why is epsilon only updated every 1000 steps??
         if total_step % 1000 == 0:
             agent.adaptive_epsilon()  # Decrease epsilon
 
@@ -89,6 +94,7 @@ for episode in range(start_episode, MAX_EPISODE):
                 agent.epsilon, time_passed, step, total_step
             )
 
+            # TODO: Should we keep track of rounds were loss is 0??
             if loss != 0:
                 wandb.log({"Loss": loss, "Average reward": np.mean(last_100_ep_reward), "Reward": total_reward,
                            "Epsilon": agent.epsilon})

@@ -22,7 +22,7 @@ class Agent:
         self.crop_dim = [20, self.state_size_h, 0, self.state_size_w]  # Cut 20px from top
         self.gamma = GAMMA  # Discount coefficient
         self.lr = LEARNING_RATE
-        self.epsilon = EPSILON  # Value for determining if agent is supposed to explore or exploit
+        self.epsilon = EPSILON
         self.decay = EPSILON_DECAY
         self.epsilon_minimum = EPSILON_MIN
         self.memory = deque(maxlen=MAX_MEMORY_LEN)
@@ -31,13 +31,23 @@ class Agent:
         self.target.eval()
         self.optimizer = torch.optim.Adam(self.target.parameters(), lr=self.lr)
 
+        # Kode fra nett
+        self.use_conv = use_conv
+        if self.use_conv:
+            self.model1 = ConvDQN(env.observation_space.shape, env.action_space.n).to(self.device)
+            self.model2 = ConvDQN(env.observation_space.shape, env.action_space.n).to(self.device)
+        else:
+            self.model1 = DQN(env.observation_space.shape, env.action_space.n).to(self.device)
+            self.model2 = DQN(env.observation_space.shape, env.action_space.n).to(self.device)
+
+        self.optimizer1 = torch.optim.Adam(self.model1.parameters())
+        self.optimizer2 = torch.optim.Adam(self.model2.parameters())
+
     def pre_process(self, frame):
         if frame.size == 210 * 160 * 3:
             image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             image = image[self.crop_dim[0]:self.crop_dim[1], self.crop_dim[2]:self.crop_dim[3]]  # Crops 20px from top
             image = cv2.resize(image, (self.target_w, self.target_h))
-
-            # TODO: Why normalize??
             image = image.reshape(self.target_w, self.target_h) / 255  # Normalizing
             return image
         else:
@@ -55,18 +65,14 @@ class Agent:
         return action
 
     def train(self):
-        # TODO: What does this if-statement do??
         if len(self.memory) < MIN_MEMORY_LEN:
             loss, max_q = [0, 0]
             return loss, max_q
-
-        # TODO: What does the zip-function do??
         state, action, reward, next_state, done = zip(*random.sample(self.memory, BATCH_SIZE))
 
         state = np.concatenate(state)
         next_state = np.concatenate(next_state)
 
-        # TODO: Why are tensor used??
         state = torch.tensor(state, dtype=torch.float, device=DEVICE)
         next_state = torch.tensor(next_state, dtype=torch.float, device=DEVICE)
         action = torch.tensor(action, dtype=torch.long, device=DEVICE)
@@ -85,7 +91,6 @@ class Agent:
 
         loss = (selected_q_value - expected_q_value.detach()).pow(2).mean()
 
-        # TODO: What does the below code do??
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -98,3 +103,47 @@ class Agent:
     def adaptive_epsilon(self):
         if self.epsilon > self.epsilon_minimum:
             self.epsilon *= self.decay
+
+    # Kode fra nett
+    def compute_loss(self, batch):
+        states, actions, rewards, next_states, dones = batch
+        states = torch.FloatTensor(states).to(self.device)
+        actions = torch.LongTensor(actions).to(self.device)
+        rewards = torch.FloatTensor(rewards).to(self.device)
+        next_states = torch.FloatTensor(next_states).to(self.device)
+        dones = torch.FloatTensor(dones)
+
+        # resize tensors
+        actions = actions.view(actions.size(0), 1)
+        dones = dones.view(dones.size(0), 1)
+
+        # compute loss
+        curr_Q1 = self.model1.forward(states).gather(1, actions)
+        curr_Q2 = self.model2.forward(states).gather(1, actions)
+
+        next_Q1 = self.model1.forward(next_states)
+        next_Q2 = self.model2.forward(next_states)
+        next_Q = torch.min(
+            torch.max(self.model1.forward(next_states), 1)[0],
+            torch.max(self.model2.forward(next_states), 1)[0]
+        )
+        next_Q = next_Q.view(next_Q.size(0), 1)
+        expected_Q = rewards + (1 - dones) * self.gamma * next_Q
+
+        loss1 = F.mse_loss(curr_Q1, expected_Q.detach())
+        loss2 = F.mse_loss(curr_Q2, expected_Q.detach())
+
+        return loss1, loss2
+
+    # Kode fra nett
+    def update(self, batch_size):
+        batch = self.replay_buffer.sample(batch_size)
+        loss1, loss2 = self.compute_loss(batch)
+
+        self.optimizer1.zero_grad()
+        loss1.backward()
+        self.optimizer1.step()
+
+        self.optimizer2.zero_grad()
+        loss2.backward()
+        self.optimizer2.step()

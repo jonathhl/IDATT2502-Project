@@ -16,6 +16,7 @@ BATCH_SIZE = 64  # Minibatch size that select randomly from mem for train nets
 MAX_EPISODE = 100_000  # Max episode
 MAX_STEP = 100_000  # Max step size for one episode
 
+# TODO: What are the below constants used for??
 MAX_MEMORY_LEN = 50_000  # Max memory len
 MIN_MEMORY_LEN = 40_000  # Min memory len before start train
 
