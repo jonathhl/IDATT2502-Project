@@ -1,3 +1,5 @@
+import os
+
 import torch
 import json
 
@@ -13,23 +15,22 @@ def load_model(agent: DQNAgent | DDQNAgent) -> int:
     :return: int
     """
     if LOAD_MODEL_FROM_FILE:
+        start_episode, start_episode_file = get_last_episode(MODEL_PATH)
         if type(agent) == DQNAgent:
-            agent.target.load_state_dict(torch.load(MODEL_PATH + str(LOAD_FILE_EPISODE) + ".pkl"))
+            agent.target.load_state_dict(torch.load(MODEL_PATH + str(start_episode_file) + ".pkl"))
 
-            with open(MODEL_PATH + str(LOAD_FILE_EPISODE) + '.json') as outfile:
+            with open(MODEL_PATH + str(start_episode_file) + '.json') as outfile:
                 param = json.load(outfile)
                 agent.epsilon = param.get('epsilon')
 
-            start_episode = LOAD_FILE_EPISODE + 1
             return start_episode
         else:
-            agent.target_model.load_state_dict(torch.load(MODEL_PATH + str(LOAD_FILE_EPISODE) + ".pkl"))
+            agent.target_model.load_state_dict(torch.load(MODEL_PATH + str(start_episode_file) + ".pkl"))
 
-            with open(MODEL_PATH + str(LOAD_FILE_EPISODE) + '.json') as outfile:
+            with open(MODEL_PATH + str(start_episode_file) + '.json') as outfile:
                 param = json.load(outfile)
                 agent.epsilon = param.get('epsilon')
 
-            start_episode = LOAD_FILE_EPISODE + 1
             return start_episode
     else:
         start_episode = 1
@@ -43,8 +44,8 @@ def save_model(agent: DQNAgent | DDQNAgent, episode: int, epsilon_dict: dict):
     :param episode: the episode to save
     :param epsilon_dict: the epsilon_dict
     """
-    weights_path = MODEL_PATH + str(episode) + '.pkl'
-    epsilon_path = MODEL_PATH + str(episode) + '.json'
+    weights_path = MODEL_PATH + "assault-cnn-" + str(episode) + '.pkl'
+    epsilon_path = MODEL_PATH + "assault-cnn-" + str(episode) + '.json'
 
     if type(agent) == DQNAgent:
         torch.save(agent.target.state_dict(), weights_path)
@@ -64,3 +65,29 @@ def save_outstr(out_str: str):
     outputPath = MODEL_PATH + "out" + '.txt'  # Save outStr to file
     with open(outputPath, 'a') as outfile:
         outfile.write(out_str + "\n")
+
+
+def get_last_episode(episodes_folder: str):
+    files = os.listdir(episodes_folder)
+    files_to_use = []
+
+    # Loops through all file in folder and selects only files with .pkl extension
+    for file in files:
+        if '.pkl' in file:
+            files_to_use.append(file.split("-"))
+
+    # Loops through selected files and finds the one with the highest number
+    last_episode_num = 0
+    for file in files_to_use:
+        episode_num = int(file[2].split(".")[0])
+        if last_episode_num < episode_num:
+            last_episode_num = episode_num
+
+    # Loops through and finds the file with the highest number and returns it
+    last_file_episode = ""
+    for file in files_to_use:
+        if "{}.pkl".format(last_episode_num) in file[2]:
+            last_file_episode = "-".join(file).split(".")[0]
+            break
+
+    return last_episode_num, last_file_episode

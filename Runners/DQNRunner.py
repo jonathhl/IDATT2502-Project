@@ -14,8 +14,6 @@ environment = gym.make(ENVIRONMENT)  # Get env
 agent = DQNAgent(environment)  # Create Agent
 
 
-
-
 def dqn_run():
     start_episode = load_model(agent)
 

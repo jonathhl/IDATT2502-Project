@@ -1,5 +1,6 @@
 from Runners.DQNRunner import dqn_run
 from Runners.DDQNRunner import ddqn_run
+from FileHandler import get_last_episode
 
 import wandb
 
@@ -15,6 +16,7 @@ chosen = int(input("Please select which model to run:\n1. DQN\n2. Double DQN\n")
 
 match chosen:
     case 1:
+        print(get_last_episode("./results/"))
         print("You chose to run the DQN model.\nStarting model...\n")
         dqn_run()
         pass
